@@ -1,0 +1,193 @@
+// Plugin: Palette Generator
+// Version: 1.0.0
+// Description : A Sketch plugin to easily generator color palettes.
+
+// Creator: Jake Dexheimer
+// Site   : http://www.jakedex.com
+// Project: https://www.github.com/jakedex/palette-generator/
+// Twitter: @jaakedex
+// License: MIT
+
+// @import 'colorflow.min.js'
+
+@import 'common.js'
+
+const plugin = {
+  Name: 'Palette Generator',
+  version: '1.0.0',
+  githubURL: 'http://www.github.com/jakedex/palette-generator'
+}
+
+const settings = {
+  identifier: 'com.jakedex.palette-generator',
+  windowWidth: 250,
+  windowHeight: 265,
+  theme: 'light',
+  dev: true
+}
+
+const fonts = {
+  fontName: '',
+  useCustomFont: false,
+  titleFontSize: 13,
+  descriptionFontSize: 10,
+  creditsFontSize: 9,
+  button: 15
+}
+
+var uiColours = {
+  light: {
+    titleBar: [NSColor colorWithCalibratedRed:(230/255) green:(230/255) blue:(230/255) alpha:1]],
+    bg: [NSColor colorWithCalibratedRed:(245/255) green:(245/255) blue:(245/255) alpha:1]],
+    button: [NSColor colorWithCalibratedRed:(14/255) green:(122/255) blue:(254/255) alpha:1]],
+    buttonLabel: [NSColor colorWithCalibratedRed:(255/255) green:(255/255) blue:(255/255) alpha:1]],
+    title: [NSColor colorWithCalibratedRed:(67/255) green:(67/255) blue:(67/255) alpha:1]],
+    description: [NSColor colorWithCalibratedRed:(100/255) green:(100/255) blue:(100/255) alpha:1]],
+    fieldBG: [NSColor colorWithCalibratedRed:(215/255) green:(215/255) blue:(215/255) alpha:1]],
+    fieldBorder: [NSColor colorWithCalibratedRed:(67/255) green:(67/255) blue:(67/255) alpha:1]],
+    creditsText: [NSColor colorWithCalibratedRed:(95/255) green:(95/255) blue:(95/255) alpha:1]]
+  }
+}
+
+var inputSettings = {
+  radius: 4,
+  width: 46,
+  height: 25,
+  fontSize: 20,
+  fontAlign: NSCenterTextAlignment,
+  hasBezel: false,
+  hasBorder: false,
+  isSingleLine: true,
+  isLineWrapping: false,
+  isScrollable: true
+}
+
+function makeColor(rgb) {
+  return [NSColor colorWithCalibratedRed:(rgb[0]/255) green:(rgb[1]/255) blue:(rgb[2]/255) alpha:1]]
+}
+
+// SETTINGS WINDOW
+var generatorWindow = function(context){
+  // get api from context
+  var sketchApp = context.api().Application()
+  var sketch = context
+
+  // get last generated hex color + palette
+  var savedHexColor = sketchApp.settingForKey("hexColor")
+  var savedColorRule = sketchApp.settingForKey("colorRule")
+  var savedPalette = sketchApp.settingForKey("palette")
+
+  // CREATE WINDOW
+  var generatorWindow = [[NSPanel alloc] init]
+  [generatorWindow setFrame:NSMakeRect(0, 0, settings.windowWidth, settings.windowHeight) display:true]
+  [generatorWindow setBackgroundColor:uiColours.light.titleBar]
+  [generatorWindow setTitlebarAppearsTransparent:true]
+  [generatorWindow setTitleVisibility:NSWindowTitleHidden]
+  [generatorWindow setMovableByWindowBackground:true]
+  [[generatorWindow standardWindowButton:NSWindowCloseButton] setHidden:false]
+  [[generatorWindow standardWindowButton:NSWindowMiniaturizeButton] setHidden:true]
+  [[generatorWindow standardWindowButton:NSWindowZoomButton] setHidden:true]
+
+  var closeButton = [generatorWindow standardWindowButton:NSWindowCloseButton]
+  [closeButton setCOSJSTargetFunction:function(sender) {
+      [generatorWindow orderOut:nil]
+      [NSApp stopModal]
+  }]
+  [closeButton setAction:"callAction:"]
+
+  // uiView
+  var uiView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, settings.windowWidth, settings.windowHeight)]
+  uiView.setWantsLayer(true)
+  [[generatorWindow contentView] addSubview:uiView]
+
+  // VERSION NUMBER
+  var versionNumber = [[NSText alloc] initWithFrame:NSMakeRect(180, 220, 50, 20)]
+  [versionNumber setFieldEditor:false]
+  [versionNumber alignRight:true]
+  [versionNumber setEditable:false]
+  [versionNumber setRichText:true]
+  [versionNumber setFieldEditor:false]
+  [versionNumber setFont:[NSFont systemFontOfSize:10]]
+  [versionNumber setTextColor:uiColours.light.title]
+  [versionNumber setDrawsBackground:false]
+  [versionNumber setString:plugin.version]
+  [uiView addSubview:versionNumber]
+
+  // UI
+  // Base Hex Color input title
+  var hexTitle = [[NSTextField alloc] initWithFrame:NSMakeRect(18, 110, 243, 15)]
+  [hexTitle setEditable:false]
+  [hexTitle setBordered:false]
+  [hexTitle setFont:[NSFont boldSystemFontOfSize:fonts.titleFontSize]]
+  [hexTitle setTextColor:uiColours.light.title]
+  [hexTitle setDrawsBackground:false]
+  [hexTitle setStringValue:"Hex value"]
+  [hexTitle sizeToFit]
+  [uiView addSubview:hexTitle]
+
+  var hexDescription = [[NSTextField alloc] initWithFrame:NSMakeRect(18, 95, 243, 15)]
+  [hexDescription setEditable:false]
+  [hexDescription setBordered:false]
+  [hexDescription setFont:[NSFont systemFontOfSize:fonts.descriptionFontSize]]
+  [hexDescription setTextColor:uiColours.light.description]
+  [hexDescription setDrawsBackground:false]
+  [hexDescription setStringValue:"Enter a hex value"]
+  [hexDescription sizeToFit]
+  [uiView addSubview:hexDescription]
+
+  var hexInputField = [[NSTextField alloc] initWithFrame:NSMakeRect(120, 98, 100, inputSettings.height)]
+  [[hexInputField cell] setPlaceholderString:"#000000"]
+  [[hexInputField cell] setFocusRingType:NSFocusRingTypeNone]
+  // [hexInputField setStringValue:savedBigValue]
+  [hexInputField setBezeled:inputSettings.hasBezel]
+  [hexInputField setBordered:inputSettings.hasBorder]
+  [[hexInputField cell] setUsesSingleLineMode:inputSettings.isSingleLine]
+  [[hexInputField cell] setWraps:inputSettings.isLineWrapping]
+  [[hexInputField cell] setScrollable:inputSettings.isScrollable]
+  [hexInputField setFont:[NSFont systemFontOfSize:inputSettings.fontSize]]
+  [hexInputField setWantsLayer:true]
+  [hexInputField setCornerRadius:inputSettings.radius]
+  [hexInputField setAlignment:inputSettings.fontAlign]
+  [hexInputField setBackgroundColor:uiColours.light.fieldBG]
+  [uiView addSubview:hexInputField]
+
+  // Color boxes
+  var i = 0
+  generatePalette('triad', '#FEB900').map(function(rgb) {
+    var color = makeColor(rgb)
+    log(color)
+
+    var colorText = [[NSText alloc] initWithFrame:NSMakeRect(0, 110 + i*20, 70, 45)]
+    [colorText setFieldEditor:false]
+    [colorText setEditable:false]
+    [colorText setRichText:true]
+    [colorText setFieldEditor:false]
+    [colorText setFont:[NSFont systemFontOfSize:10]]
+    [colorText setTextColor:color]
+    [colorText setDrawsBackground:false]
+    [colorText setString: rgbToHex(rgb)]
+    [uiView addSubview:colorText]
+    i += 1;
+  });
+
+  var generateBtn = [[NSButton alloc] initWithFrame:NSMakeRect(12, 35, 223, 45)]
+    [generateBtn setTitle:"Generate"]
+    [generateBtn setBezelStyle:NSRoundedBezelStyle]
+    [generateBtn setKeyEquivalent:"\r"]
+    [generateBtn setFont:[NSFont systemFontOfSize:fonts.button]]
+    [generateBtn setCOSJSTargetFunction:function(sender) {
+        var small = smallNudgeInputField.stringValue()
+        var big = hexInputField.stringValue()
+        sketchLog(@"test test test")
+        sketchApp.setSettingForKey("nudgeDistanceSmall",small)
+        sketchApp.setSettingForKey("nudgeDistanceBig",big)
+        [generatorWindow orderOut:nil]
+        [NSApp stopModal]
+    }]
+    [generateBtn setAction:"callAction:"]
+    [uiView addSubview:generateBtn]
+    [generatorWindow setDefaultButtonCell:[generateBtn cell]]
+
+  // RUNMODAL
+  [NSApp runModalForWindow:generatorWindow]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "Palette Generator",
+  "description": "A Sketch plugin to easily generator color palettes.",
+  "version": "1.0.0",
+  "author": "Jake Dexheimer",
+  "authorEmail": "hello@jakedex.com",
+  "homepage": "https://github.com/jakedex/palette-generator",
+  "identifier": "com.jakedex.palette-generator",
+  "compatibleVersion": 4.1,
+  "bundleVersion": 1,
+  "commands": [
+    {
+      "name": "Palette Generator",
+      "script": "generator.cocoascript",
+      "handler": "generatorWindow",
+      "shortcut": "alt cmd n",
+      "identifier": "Palette Generator",
+      "icon": "",
+      "description": "Open Palette Generator - Easily generate color palettes."
+    }
+  ],
+  "menu": {
+    "items": [
+      "Palette Generator"
+    ],
+    "isRoot": true
+  }
+}
