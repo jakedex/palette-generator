@@ -2,8 +2,7 @@
   "name": "palette-generator",
   "version": "1.0.0",
   "description": "A Sketch plugin to easily generator color palettes.",
-  "main": "palette-generator.sketchplugin",
-  "manifest": "src/manifest.json",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,9 +23,6 @@
     "url": "https://github.com/jakedex/palette-generator/issues"
   },
   "homepage": "https://github.com/jakedex/palette-generator#readme",
-  "devDependencies": {
-    "sketch-builder": "^0.2.0"
-  },
   "dependencies": {
     "tinycolor2": "^1.4.1"
   }
