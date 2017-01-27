@@ -21,7 +21,7 @@ const plugin = {
 const settings = {
   identifier: 'com.jakedex.palette-generator',
   windowWidth: 250,
-  windowHeight: 265,
+  windowHeight: 305,
   theme: 'light',
   dev: true
 }
@@ -101,7 +101,7 @@ var generatorWindow = function(context){
   [[generatorWindow contentView] addSubview:uiView]
 
   // VERSION NUMBER
-  var versionNumber = [[NSText alloc] initWithFrame:NSMakeRect(180, 220, 50, 20)]
+  var versionNumber = [[NSText alloc] initWithFrame:NSMakeRect(180, 270, 50, 20)]
   [versionNumber setFieldEditor:false]
   [versionNumber alignRight:true]
   [versionNumber setEditable:false]
@@ -138,7 +138,7 @@ var generatorWindow = function(context){
   var hexInputField = [[NSTextField alloc] initWithFrame:NSMakeRect(120, 98, 100, inputSettings.height)]
   [[hexInputField cell] setPlaceholderString:"#000000"]
   [[hexInputField cell] setFocusRingType:NSFocusRingTypeNone]
-  // [hexInputField setStringValue:savedBigValue]
+  [hexInputField setStringValue:savedHexColor]
   [hexInputField setBezeled:inputSettings.hasBezel]
   [hexInputField setBordered:inputSettings.hasBorder]
   [[hexInputField cell] setUsesSingleLineMode:inputSettings.isSingleLine]
@@ -151,38 +151,59 @@ var generatorWindow = function(context){
   [hexInputField setBackgroundColor:uiColours.light.fieldBG]
   [uiView addSubview:hexInputField]
 
-  // Color boxes
-  var i = 0
-  generatePalette('triad', '#FEB900').map(function(rgb) {
-    var color = makeColor(rgb)
-    log(color)
+  // Color rule selector
+  var ruleTitle = [[NSTextField alloc] initWithFrame:NSMakeRect(18, 150, 243, 15)]
+  [ruleTitle setEditable:false]
+  [ruleTitle setBordered:false]
+  [ruleTitle setFont:[NSFont boldSystemFontOfSize:fonts.titleFontSize]]
+  [ruleTitle setTextColor:uiColours.light.title]
+  [ruleTitle setDrawsBackground:false]
+  [ruleTitle setStringValue:"Color rule"]
+  [ruleTitle sizeToFit]
+  [uiView addSubview:ruleTitle]
 
-    var colorText = [[NSText alloc] initWithFrame:NSMakeRect(0, 110 + i*20, 70, 45)]
-    [colorText setFieldEditor:false]
-    [colorText setEditable:false]
-    [colorText setRichText:true]
-    [colorText setFieldEditor:false]
-    [colorText setFont:[NSFont systemFontOfSize:10]]
-    [colorText setTextColor:color]
-    [colorText setDrawsBackground:false]
-    [colorText setString: rgbToHex(rgb)]
-    [uiView addSubview:colorText]
-    i += 1;
-  });
+  var ruleDescription = [[NSTextField alloc] initWithFrame:NSMakeRect(18, 135, 243, 15)]
+  [ruleDescription setEditable:false]
+  [ruleDescription setBordered:false]
+  [ruleDescription setFont:[NSFont systemFontOfSize:fonts.descriptionFontSize]]
+  [ruleDescription setTextColor:uiColours.light.description]
+  [ruleDescription setDrawsBackground:false]
+  [ruleDescription setStringValue:"colourz rule"]
+  [ruleDescription sizeToFit]
+  [uiView addSubview:ruleDescription]
 
-  var generateBtn = [[NSButton alloc] initWithFrame:NSMakeRect(12, 35, 223, 45)]
+  var rulePopUp = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(120, 128, 100, 50)]
+  var rules = ['Triad', 'Analogous', 'Monochromatic', 'Complementary', 'Compound', 'Shades']
+  [rulePopUp addItemsWithTitles:rules]
+  // TODO save selectedItemIndex
+  [rulePopUp selectItemAtIndex:0]
+  [uiView addSubview:rulePopUp]
+
+  var displayNewPalette = function(hex) {
+    var i = 0
+    generatePalette('triad', hex).map(function(rgb) {
+      var color = makeColor(rgb)
+      log(color)
+
+      var colorSquare = [[NSView alloc] initWithFrame:NSMakeRect(28 + i*42, 170, 40, 40)]
+      colorSquare.setWantsLayer(true)
+      colorSquare.setBackgroundColor(color)
+      [uiView addSubview:colorSquare]
+
+      i += 1;
+    })
+  }
+
+  var generateBtn = [[NSButton alloc] initWithFrame:NSMakeRect(12, 14, 223, 45)]
     [generateBtn setTitle:"Generate"]
     [generateBtn setBezelStyle:NSRoundedBezelStyle]
     [generateBtn setKeyEquivalent:"\r"]
     [generateBtn setFont:[NSFont systemFontOfSize:fonts.button]]
     [generateBtn setCOSJSTargetFunction:function(sender) {
-        var small = smallNudgeInputField.stringValue()
-        var big = hexInputField.stringValue()
-        sketchLog(@"test test test")
-        sketchApp.setSettingForKey("nudgeDistanceSmall",small)
-        sketchApp.setSettingForKey("nudgeDistanceBig",big)
-        [generatorWindow orderOut:nil]
-        [NSApp stopModal]
+        var hex = hexInputField.stringValue()
+        log("hexValue: " + hex)
+        sketchApp.setSettingForKey("hexColor",hex)
+        displayNewPalette(hex)
     }]
     [generateBtn setAction:"callAction:"]
     [uiView addSubview:generateBtn]
